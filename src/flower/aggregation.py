@@ -24,7 +24,7 @@ def eval_config(server_round: int):
         "round": server_round
     }
 
-def get_fedprox(save_path, num_classes, testloader, device, **fedprox_cfg):
+def get_fedprox(save_path, num_classes, testloader, device, model_name, model_config, **fedprox_cfg):
     return FedProx(
         fraction_fit=fedprox_cfg.get("fraction_fit", 1.0),
         fraction_evaluate=fedprox_cfg.get("fraction_evaluate", 1.0),
@@ -32,18 +32,18 @@ def get_fedprox(save_path, num_classes, testloader, device, **fedprox_cfg):
         min_evaluate_clients=fedprox_cfg.get("num_clients", 7),
         min_available_clients=fedprox_cfg.get("num_clients", 7),
         proximal_mu=fedprox_cfg.get("mu", 0.05),
-        evaluate_fn=server_evaluate_fn(num_classes, testloader, device, save_path=save_path),
+        evaluate_fn=server_evaluate_fn(num_classes, testloader, device, model_name=model_name, model_config=model_config, save_path=save_path),
         evaluate_metrics_aggregation_fn=metrics_agg,
     )
 
 
-def get_fedavg(save_path, num_classes, testloader, device, **fedavg_cfg):
+def get_fedavg(save_path, num_classes, testloader, device, model_name, model_config, **fedavg_cfg):
     return FedAvg(
         fraction_fit=fedavg_cfg.get("fraction_fit", 1.0),
         fraction_evaluate=fedavg_cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=fedavg_cfg.get("num_clients", 7),
         min_evaluate_clients=fedavg_cfg.get("num_clients", 7),
         min_available_clients=fedavg_cfg.get("num_clients", 7),
-        evaluate_fn=server_evaluate_fn(num_classes, testloader, device, save_path=save_path),
+        evaluate_fn=server_evaluate_fn(num_classes, testloader, device, model_name=model_name, model_config=model_config, save_path=save_path),
         evaluate_metrics_aggregation_fn=metrics_agg,
     )

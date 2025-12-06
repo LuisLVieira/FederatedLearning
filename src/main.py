@@ -118,6 +118,7 @@ def main():
     for name in trainable_layers:
         print(name)
 
+    # Federated Learning process here ...
 
 if __name__ == "__main__":
     main()

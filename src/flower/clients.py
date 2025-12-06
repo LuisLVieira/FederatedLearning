@@ -6,13 +6,13 @@ from ..models import model_train, models_definition
 class KidneyClient(fl.client.NumPyClient):
     def __init__(
         self,
-        dataset
+        dataset,
         model,
         trainloader,
         valloader,
         device,
         num_classes
-):
+    ):
         self.dataset = dataset
         self.model = model
         self.trainloader = trainloader
@@ -52,7 +52,8 @@ class KidneyClient(fl.client.NumPyClient):
             trainloader=self.trainloader,
             valloader=self.valloader,
             device=self.device,
-            patience=2,
+            model_config=config,
+            num_classes=self.num_classes,
             global_params=global_params,   # <--
             mu=0.1,               # <--
             verbose=False
@@ -71,7 +72,7 @@ class KidneyClient(fl.client.NumPyClient):
         self.set_parameters(parameters)
         self.model.to(self.device)
 
-        metrics, _ = model_train.evaluate(self.model, self.valloader, self.device, num_classes=self.num_classes)
+        metrics, _ = model_train.evaluate(self.model, self.valloader, self.device, num_classes=self.num_classes, model_config=config)
         return float(metrics["loss"]), len(self.valloader.dataset), metrics
 
 
@@ -83,5 +84,5 @@ def client_fn(cid: str, device, num_classes, model_name, trainloaders, valloader
     trainloader = trainloaders[int(cid)]
     valloader = valloaders[int(cid)]
 
-
-    return KidneyClient(model, trainloader, valloader, device, num_classes)
+    dataset = None  # Dataset is not used in client_fn context
+    return KidneyClient(dataset, model, trainloader, valloader, device, num_classes)
