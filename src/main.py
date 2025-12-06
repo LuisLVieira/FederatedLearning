@@ -12,8 +12,10 @@ from models import models_definition
 from data_processing.dataloader import load_datasets, plot_load_data
 import numpy as np
 import random
-from torch import manual_seed
+from torch import manual_seed, device, cuda, load
 import os
+from flower.report import best_model_test, plot_confusion_matrices, save_history_results
+from flower.simulation import simulation
 
 
 def main():
@@ -27,7 +29,7 @@ def main():
         cfg = json.load(f)
     
     if ("save_path" in cfg) and (cfg["save_path"]):
-        os.makedirs(cfg["save_path"], exist_ok=True)
+        os.makedirs(os.path.join(cfg["save_path"], cfg.get("experiment_name", "")), exist_ok=True)
 
     random.seed(cfg.get("random_seed", 42))
     np.random.seed(cfg.get("random_seed", 42))
@@ -55,7 +57,13 @@ def main():
         random_seed=cfg.get("random_seed", 42)
     )
 
-    show_train_test_info(clients_data, test_data, cfg.get("save_path", ""), plot=False)
+    show_train_test_info(
+        clients_data,
+        test_data,
+        save_path=cfg.get("save_path", ""),
+        experiment_name=cfg.get("experiment_name", ""),
+        plot=True
+    )
 
     # get client data from train set
 
@@ -71,6 +79,7 @@ def main():
         clients,
         num_clients=cfg.get("num_clients", 10),
         save_path=cfg.get("save_path", ""),
+        experiment_name=cfg.get("experiment_name", ""),
         figname="class_distribution",
         plot=False
     )
@@ -92,6 +101,7 @@ def main():
     #     cfg.get("num_clients", 10),
     #     label_map=class_to_target,
     #     save_path=cfg.get("save_path", ""),
+    #     experiment_name=cfg.get("experiment_name", ""),
     #     plot=False,
     #     figname="original_class_distribution"
     # )
@@ -119,6 +129,38 @@ def main():
         print(name)
 
     # Federated Learning process here ...
+    _device = device("cuda" if cuda.is_available() else "cpu")
+
+    history = simulation(
+        trainloaders,
+        valloaders,
+        testloader,
+        device=_device,
+        num_classes=len(class_to_target),
+        **cfg
+    )
+
+    log.logger.info(f"Training history: {history}")
+
+    # Save training history
+
+    save_history_results(history, cfg, dpi=96)
+
+    # Best model test
+
+    metrics, cm = best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
+
+    plot_confusion_matrices(
+        cm,
+        class_names=[class_to_target[i] for i in range(len(class_to_target))],
+        save_path=cfg.get("save_path", ""),
+        experiment_name=cfg.get("experiment_name", ""),
+        figname="confusion_matrix_best_model"
+    )
+
+    metrics_df = pd.DataFrame([metrics])
+    metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "metrics.csv"), index=False)
+
 
 if __name__ == "__main__":
     main()

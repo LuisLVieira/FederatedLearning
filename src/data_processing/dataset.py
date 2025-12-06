@@ -44,6 +44,7 @@ def plot_random_kidneydata(
         data : pd.DataFrame,
         label_map: dict,
         save_path: str,
+        experiment_name: str,
         target_column: str = "Class"
 ):
     classes = data[target_column].unique()
@@ -61,7 +62,7 @@ def plot_random_kidneydata(
         plt.axis('off')
 
     if save_path:
-        plt.savefig(os.path.join(save_path, 'data_samples.png'))
+        plt.savefig(os.path.join(save_path, experiment_name, 'data_samples.png'))
 
 
 def split_on_train_test(
@@ -88,6 +89,7 @@ def show_train_test_info(
         train_data,
         test_data,
         save_path,
+        experiment_name: str = "",
         plot=True,
         group_column: str = "group",
         target_column: str = "Class"
@@ -104,7 +106,7 @@ def show_train_test_info(
         plt.tight_layout()
 
         if save_path:
-            plt.savefig(os.path.join(save_path, 'test_data_counts.png'))
+            plt.savefig(os.path.join(save_path, experiment_name, 'test_data_counts.png'))
 
 
 def split_on_clients(
@@ -204,6 +206,7 @@ def plot_class_distribution_on_clients(
         num_clients,
         save_path,
         figname,
+        experiment_name: str = "",
         target_column="Class",
         plot=True
 ):
@@ -228,4 +231,4 @@ def plot_class_distribution_on_clients(
         plt.show()
 
     if save_path:
-        plt.savefig(os.path.join(save_path, f'{figname}.png'))
+        plt.savefig(os.path.join(save_path, experiment_name,f'{figname}.png'))

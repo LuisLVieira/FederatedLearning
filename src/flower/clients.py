@@ -11,7 +11,8 @@ class KidneyClient(fl.client.NumPyClient):
         trainloader,
         valloader,
         device,
-        num_classes
+        num_classes,
+        mu=0.1,
     ):
         self.dataset = dataset
         self.model = model
@@ -19,6 +20,7 @@ class KidneyClient(fl.client.NumPyClient):
         self.valloader = valloader
         self.device = device
         self.num_classes = num_classes
+        self.mu = mu
 
     # --------------------------------------------------------
     # RETORNA OS PARÂMETROS LOCAIS
@@ -55,7 +57,7 @@ class KidneyClient(fl.client.NumPyClient):
             model_config=config,
             num_classes=self.num_classes,
             global_params=global_params,   # <--
-            mu=0.1,               # <--
+            mu=self.mu,               # <--
             verbose=False
         )
         # 4. RETORNA OS PESOS LOCAIS APÓS O TREINO
@@ -76,7 +78,7 @@ class KidneyClient(fl.client.NumPyClient):
         return float(metrics["loss"]), len(self.valloader.dataset), metrics
 
 
-def client_fn(cid: str, device, num_classes, model_name, trainloaders, valloaders):
+def client_fn(cid: str, device, num_classes, model_name, trainloaders, valloaders, mu):
     """Create a Kidney client representing a single organization."""
 
     model = models_definition.build_model(model_name=model_name, num_classes=num_classes)
@@ -85,4 +87,4 @@ def client_fn(cid: str, device, num_classes, model_name, trainloaders, valloader
     valloader = valloaders[int(cid)]
 
     dataset = None  # Dataset is not used in client_fn context
-    return KidneyClient(dataset, model, trainloader, valloader, device, num_classes)
+    return KidneyClient(dataset, model, trainloader, valloader, device, num_classes, mu)

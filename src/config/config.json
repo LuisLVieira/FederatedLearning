@@ -1,8 +1,9 @@
 {
+    "experiment_name": "FedProx_KidneyData_ResNet18_CustomLayer4_FC",
     "dataset_path": "/mnt/d/Mestrado/MO839/data",
     "metadata_path": "/mnt/d/Mestrado/MO839/data/KidneyData.csv",
     "target_columns": ["target", "Class"],
-    "save_path": "../../imgs",
+    "save_path": "../../results",
     "group_column": "group",
     "num_workers": 0,
     "num_clients": 7,
@@ -10,8 +11,14 @@
     "rounds": 22,
     "test_ratio": 0.15,
     "valid_ratio": 0.15,
-    "Aggregation": "FedProx",
-    "mu": 0.01,
+    "aggregation": "fedprox",
+    "fraction_fit": 1.0,
+    "fraction_evaluate": 1.0,
+    "mu": 0.05,
+    "resources": {
+        "num_cpus": 1,
+        "num_gpus": 0.25
+    },
     "data_transform": {
         "img_size": 224,
         "augmentations": {
