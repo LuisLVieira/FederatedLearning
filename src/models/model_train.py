@@ -4,37 +4,44 @@ from torch import nn
 import numpy as np
 from typing import List
 from collections import OrderedDict
-from metrics import compute_metrics
+from .optimizers import get_optimizer_class, build_scheduler
+from .criterion import build_criterion
+from .metrics import compute_metrics
+
 
 def train(model,
+          dataset,
           trainloader,
           valloader,
           device,
-          patience,
           model_config,
           num_classes,
           global_params=None,
           mu=0.01,
-          verbose=False):
+          aggregation_method=None,
+          verbose=False
+):
 
     epochs = model_config['epochs']
     criterion = model_config['criterion']
     optimizer_class = model_config['optimizer']
     lr = model_config['learning_rate']
+    lr_scheduler_config = model_config.get('lr_scheduler', None)
+    patience = model_config.get('patience', 3)
+    weight_decay = model_config.get('weight_decay', 0.0)
+
+    criterion = build_criterion(criterion, dataset=dataset, device=device)
 
     # Weight decay + only trainable params
+    optimizer_class = get_optimizer_class()[optimizer_class]
     optimizer = optimizer_class(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=lr,
-        weight_decay=1e-4
+        weight_decay=weight_decay
     )
 
     # Scheduler para estabilizar FL
-    scheduler = torch.optim.lr_scheduler.StepLR(
-        optimizer,
-        step_size=2,
-        gamma=0.5
-    )
+    scheduler = build_scheduler(optimizer, lr_scheduler_config)
 
     model.to(device)
 
@@ -56,15 +63,11 @@ def train(model,
             outputs = model(images)
             loss = criterion(outputs, labels)
 
-            # -----------------------------------
-            # FEDPROX — TERMO PROXIMAL REAL
-            # -----------------------------------
-            if global_params is not None:
+            if aggregation_method == "FedProx" and global_params is not None:
                 prox = 0.0
                 for w, w_global in zip(model.parameters(), global_params):
                     prox += ((w - w_global.to(device)) ** 2).sum()
                 loss = loss + (mu / 2) * prox
-            # -----------------------------------
 
             loss.backward()
 
@@ -85,7 +88,7 @@ def train(model,
         scheduler.step()
 
         # Avaliação no cliente
-        val_metrics, _ = evaluate(model, valloader, device, num_classes=num_classes)
+        val_metrics, _ = evaluate(model, dataset, valloader, device, num_classes=num_classes, model_config=model_config)
         val_loss = val_metrics['loss']
 
         # Early stopping
@@ -110,9 +113,9 @@ def train(model,
     return model
 
 
-def evaluate(model, testloader, device, num_classes, model_config):
+def evaluate(model, dataset, testloader, device, num_classes, model_config):
     model.to(device)
-    criterion = model_config['criterion']
+    criterion = build_criterion(model_config['criterion'], dataset=dataset, device=device)
     model.eval()
 
     total, correct = 0, 0
