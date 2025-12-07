@@ -233,7 +233,7 @@ def plot_load_data(
         ax_val.set_title(f"Client {i+1} - Val")
         ax_val.set_xlabel("")
         ax_val.set_ylabel("")
-
+    
     plt.suptitle("Class Distribution per Client after balancing", fontsize=16)
     plt.subplots_adjust(top=0.88)
 
