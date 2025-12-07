@@ -85,9 +85,10 @@ def train(model,
         epoch_acc = correct / total if total > 0 else 0.0
 
         # Step do scheduler
-        scheduler.step()
+        if scheduler is not None:
+            scheduler.step()
 
-        # Avaliação no cliente
+        # Avaliação no clientes
         val_metrics, _ = evaluate(model, dataset, valloader, device, num_classes=num_classes, model_config=model_config)
         val_loss = val_metrics['loss']
 
