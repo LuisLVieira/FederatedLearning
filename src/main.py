@@ -136,6 +136,7 @@ def main():
         valloaders,
         testloader,
         device=_device,
+        dataset=dataset,
         num_classes=len(class_to_target),
         **cfg
     )

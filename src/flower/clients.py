@@ -1,4 +1,5 @@
 import flwr as fl
+from flwr.common import Context
 from collections import OrderedDict
 from torch import tensor
 from models import model_train, models_definition
@@ -77,10 +78,22 @@ class KidneyClient(fl.client.NumPyClient):
         return float(metrics["loss"]), len(self.valloader.dataset), metrics
 
 
-def client_fn(cid: str, device, num_classes, trainloaders, valloaders, mu, model_config):
-    """Factory do cliente FedProx."""
+def client_fn(context: Context):
+    """Factory do cliente FedProx - Flower Context API."""
+    # Extract client ID from node_config
+    cid = str(context.node_config.get("node_id", "0"))
+    
+    # Get client data from context's user state (injected by simulation wrapper)
+    user_state = getattr(context, "_user_state", {})
+    device = user_state.get("device")
+    dataset = user_state.get("dataset")
+    num_classes = user_state.get("num_classes")
+    trainloaders = user_state.get("trainloaders")
+    valloaders = user_state.get("valloaders")
+    mu = user_state.get("mu", 0.1)
+    model_config = user_state.get("model_config", {})
+    
     model_name = model_config["model"]
-
     model = models_definition.build_model(model_name=model_name, num_classes=num_classes)
     model = model.to(device)
 
@@ -88,7 +101,7 @@ def client_fn(cid: str, device, num_classes, trainloaders, valloaders, mu, model
     valloader = valloaders[int(cid)]
 
     return KidneyClient(
-        dataset=None,
+        dataset=dataset,
         model=model,
         trainloader=trainloader,
         valloader=valloader,
