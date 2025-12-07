@@ -110,6 +110,9 @@ def main():
 
     model_config = cfg.get("model_config", {})
 
+    with open(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "config.json"), 'w') as f:
+        json.dump(cfg, f, indent=4)
+
     model = models_definition.build_model(
         model_name=model_config.get("model", "custom_layer4_fc_resnet18"),
         num_classes=len(class_to_target)
