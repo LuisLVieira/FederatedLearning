@@ -7,17 +7,19 @@ def build_criterion(criterion_config, dataset=None, device=None):
     name = next(iter(criterion_config.keys()))
     params = criterion_config[name]
 
-
-    if name == "FocalLoss" and dataset is not None and device is not None:
+    if name == "FocalLoss":
         name = "CrossEntropyLoss"
-        class_weights = compute_class_weight(
-        class_weight="balanced",
-        classes=np.unique(dataset["Class"]),
-        y=dataset["Class"]
-    )
-        class_weights = tensor(class_weights, dtype=float).to(device)
-        params['weight'] = class_weights
-    
+
+        if dataset is not None and device is not None:
+            class_weights = compute_class_weight(
+                class_weight="balanced",
+                classes=np.unique(dataset["Class"]),
+                y=dataset["Class"]
+            )
+            class_weights = tensor(class_weights, dtype=float).to(device)
+            params['weight'] = class_weights
+
+
     LossClass = getattr(nn, name)
 
     return LossClass(**params)
