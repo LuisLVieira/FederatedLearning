@@ -27,7 +27,7 @@ def simulation(trainloaders, valloaders, testloader, device, dataset, num_classe
     strategy_func = getattr(agg, f"get_{strategy_name}", None)
     
     if strategy_func is None:
-        raise ValueError(f"Unknown strategy '{strategy_name}'. Supported: fedprox, fedavg.")
+        raise ValueError(f"Unknown strategy '{strategy_name}'. Supported: fedprox, fedavg, fedadagrad, fedadam, fedyogi, krum, dp_fedavg_adaptive, qfedavg, faulttolerant_fedavg.")
     
     strategy = strategy_func(save_path, num_classes, testloader, device, model_name, model_config, **strategy_cfg)
     
