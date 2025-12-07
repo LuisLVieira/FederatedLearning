@@ -198,6 +198,7 @@ def plot_load_data(
         label_map,
         plot=True,
         save_path="",
+        experiment_name="",
         figname="class_distribution"
     ):
     print('Plotting class distribution on loaded data...')
@@ -232,11 +233,13 @@ def plot_load_data(
         ax_val.set_title(f"Client {i+1} - Val")
         ax_val.set_xlabel("")
         ax_val.set_ylabel("")
-
+    
+    plt.suptitle("Class Distribution per Client after balancing", fontsize=16)
+    plt.subplots_adjust(top=0.88)
 
     plt.tight_layout()
     if plot:
         plt.show()
 
     if save_path:
-        plt.savefig(os.path.join(save_path, f'{figname}.png'))
+        plt.savefig(os.path.join(save_path, experiment_name, f'{figname}.png'))
