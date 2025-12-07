@@ -227,6 +227,8 @@ def plot_class_distribution_on_clients(
         axes[i + num_clients].set_ylabel("")
 
     plt.tight_layout()
+    plt.suptitle("Class Distribution per Client", fontsize=16)
+    plt.subplots_adjust(top=0.88)
     if plot:
         plt.show()
 
