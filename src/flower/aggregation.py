@@ -93,7 +93,7 @@ def get_fedyogi(save_path, num_classes, testloader, device, model_name, model_co
     )
 
 def get_krum(save_path, num_classes, testloader, device, model_name, model_config, **cfg):
-    return KrumStrategy(
+    return Krum(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
