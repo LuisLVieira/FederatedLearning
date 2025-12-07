@@ -1,5 +1,4 @@
-from flwr.server.strategy import FedProx
-from flwr.server.strategy import FedAvg
+from flwr.server.strategy import FedProx, FedAvg, FedAdagrad
 import flwr as fl
 from .server import server_evaluate_fn
 
@@ -44,6 +43,19 @@ def get_fedavg(save_path, num_classes, testloader, device, model_name, model_con
         min_fit_clients=cfg.get("num_clients", 7),
         min_evaluate_clients=cfg.get("num_clients", 7),
         min_available_clients=cfg.get("num_clients", 7),
+        evaluate_fn=server_evaluate_fn(num_classes, testloader, device, model_name=model_name, model_config=model_config, save_path=save_path),
+        evaluate_metrics_aggregation_fn=metrics_agg,
+    )
+
+def get_fedadagrad(save_path, num_classes, testloader, device, model_name, model_config, **cfg):
+    return FedAdagrad(
+        fraction_fit=cfg.get("fraction_fit", 1.0),
+        fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
+        min_fit_clients=cfg.get("num_clients", 7),
+        min_evaluate_clients=cfg.get("num_clients", 7),
+        min_available_clients=cfg.get("num_clients", 7),
+        eta=cfg.get("eta", 0.1),
+        tau=cfg.get("tau", 1e-9),
         evaluate_fn=server_evaluate_fn(num_classes, testloader, device, model_name=model_name, model_config=model_config, save_path=save_path),
         evaluate_metrics_aggregation_fn=metrics_agg,
     )
