@@ -1,6 +1,6 @@
 import os
 from functools import partial
-import aggregation as agg
+from . import aggregation as agg
 from .clients import client_fn
 
 os.environ["FLWR_SIMULATION_USE_RAY"] = "0"
@@ -14,7 +14,7 @@ def simulation(trainloaders, valloaders, testloader, device, num_classes, **cfg)
     strategy_name = cfg.get("aggregation", "fedavg")
     strategy_cfg = cfg.get("strategy_config", {})
     model_config = cfg.get("model_config", {})
-    model_name = model_config.get("model_name")
+    model_name = model_config.get("model")
     save_path = os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "models")
     os.makedirs(save_path, exist_ok=True)
 
@@ -32,10 +32,10 @@ def simulation(trainloaders, valloaders, testloader, device, num_classes, **cfg)
         client_fn,
         device=device,
         num_classes=num_classes,
-        model_name=model_name,
         trainloaders=trainloaders,
         valloaders=valloaders,
-        mu=cfg.get("mu", 0.1)
+        mu=cfg.get("mu", 0.1),
+        model_config=model_config   # <<<<< ADICIONADO
     )
 
     return fl.simulation.start_simulation(
