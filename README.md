@@ -69,7 +69,7 @@ The modular structure makes it easy to run and reproduce experiments:
 3. **Run federated training:**
     Start the execution by specifying the configuration file path:
     ```bash
-    python main.py --config src/config/config.json
+    python main.py --config config/config.json
     ```
 
 4. **Analysis:**
