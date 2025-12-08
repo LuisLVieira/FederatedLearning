@@ -1,0 +1,69 @@
+{
+    "experiment_name": "fedadagrad_simple_tl_resnet18",
+    "dataset_path": "/mnt/d/Mestrado/MO839/data",
+    "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
+    "target_columns": [
+        "target",
+        "Class"
+    ],
+    "save_path": "../results",
+    "group_column": "group",
+    "num_workers": 0,
+    "num_clients": 7,
+    "random_seed": 42,
+    "rounds": 22,
+    "test_ratio": 0.15,
+    "global_valid_ratio": 0.15,
+    "valid_ratio": 0.15,
+    "aggregation": "fedavg",
+    "fraction_fit": 1.0,
+    "fraction_evaluate": 1.0,
+    "mu": 0.05,
+    "resources": {
+        "num_cpus": 1,
+        "num_gpus": 0.25
+    },
+    "data_transform": {
+        "img_size": 224,
+        "augmentations": {
+            "RandomHorizontalFlip": {
+                "p": 0.1
+            },
+            "RandomRotation": {
+                "degrees": 8
+            }
+        },
+        "normalizer": {
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ]
+        }
+    },
+    "model_config": {
+        "model": "simple_tl_resnet18",
+        "epochs": 3,
+        "batch_size": 64,
+        "learning_rate": 0.001,
+        "criterion": {
+            "FocalLoss": {
+                "label_smoothing": 0.05
+            }
+        },
+        "optimizer": "Adam",
+        "weight_decay": 0.0001,
+        "patience": 3,
+        "lr_scheduler": {
+            "StepLR": {
+                "step_size": 2,
+                "gamma": 0.5
+            }
+        }
+    }
+}

@@ -144,6 +144,7 @@ def main():
         device=_device,
         dataset=dataset,
         num_classes=len(class_to_target),
+        model=model,
         **cfg
     )
 

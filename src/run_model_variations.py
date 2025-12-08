@@ -41,8 +41,7 @@ def run_experiment(config_path, model):
     # Update model
     config['model_config']['model'] = model
 
-    
-    # Update experiment name to include epoch count
+    # Update experiment name to include model
     base_experiment_name = ('_').join(config['experiment_name'].split('_')[:1])
     config['experiment_name'] = f"{base_experiment_name}_{model}"
     
@@ -60,14 +59,14 @@ def run_experiment(config_path, model):
         )
         
         if result.returncode == 0:
-            logger.info(f"✓ Experiment with {model} epoch(s) completed successfully")
+            logger.info(f"✓ Experiment with {model} completed successfully")
             return True
         else:
-            logger.error(f"✗ Experiment with {model} epoch(s) failed with return code {result.returncode}")
+            logger.error(f"✗ Experiment with {model} failed with return code {result.returncode}")
             return False
             
     except Exception as e:
-        logger.error(f"✗ Error running experiment with {model} epoch(s): {str(e)}")
+        logger.error(f"✗ Error running experiment with {model}: {str(e)}")
         return False
     finally:
         # Restore original config
@@ -84,13 +83,18 @@ def main():
         logger.error(f"Config file not found: {config_path}")
         sys.exit(1)
     
-    # Test with epoch counts from 1 to 10
-    epoch_counts = list(range(1, 11))
+    models = [
+        "simple_tl_resnet18",
+        "custom_fc_resnet18",
+        "efficientnet_b0",
+        "mobilenet_v3_small",
+        "custom_layer4_fc_resnet18",
+    ]
     results = {}
     
-    logger.info(f"Starting experiments with varying epoch counts: {epoch_counts}")
+    logger.info(f"Starting experiments with varying model: {models}")
     
-    for model in epoch_counts:
+    for model in models:
         success = run_experiment(config_path, model)
         results[model] = 'SUCCESS' if success else 'FAILED'
     
@@ -99,7 +103,7 @@ def main():
     logger.info("EXPERIMENT SUMMARY")
     logger.info(f"{'='*80}")
     
-    for model in epoch_counts:
+    for model in models:
         status = results[model]
         symbol = "✓" if status == 'SUCCESS' else "✗"
         logger.info(f"{symbol} model: {model:2d} - {status}")
@@ -108,7 +112,7 @@ def main():
     successes = sum(1 for v in results.values() if v == 'SUCCESS')
     failures = sum(1 for v in results.values() if v == 'FAILED')
     
-    logger.info(f"\nTotal: {successes} successful, {failures} failed out of {len(epoch_counts)} experiments")
+    logger.info(f"\nTotal: {successes} successful, {failures} failed out of {len(models)} experiments")
     logger.info(f"{'='*80}\n")
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Script to test federated learning configuration with varying number of rounds.
-Keeps all other parameters constant and only modifies 'rounds'.
+Script to test federated learning configuration with varying number of rounds (1-15).
+Keeps all other parameters constant and only modifies rounds.
 """
 
 import json
@@ -28,10 +28,10 @@ def save_config(config_path, config):
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=4)
 
-def run_experiment(config_path, num_rounds):
+def run_experiment(config_path, rounds):
     """Run a single experiment with specified number of rounds."""
     logger.info(f"\n{'='*80}")
-    logger.info(f"Starting experiment with {num_rounds} round(s)")
+    logger.info(f"Starting experiment with {rounds} round (s)")
     logger.info(f"{'='*80}\n")
     
     # Load current config
@@ -39,16 +39,14 @@ def run_experiment(config_path, num_rounds):
     original_rounds = config['rounds']
     
     # Update rounds
-    config['rounds'] = num_rounds
+    config['rounds'] = rounds
+
     
-    # Update experiment name to include rounds count
+    # Update experiment name to include round  count
     base_experiment_name = config['experiment_name'].split('_rounds_')[0]
-    config['experiment_name'] = f"{base_experiment_name}_rounds_{num_rounds}"
+    config['experiment_name'] = f"{base_experiment_name}_rounds_{rounds}"
     
-    logger.info(
-        f"Config updated: rounds={num_rounds}, "
-        f"experiment_name={config['experiment_name']}"
-    )
+    logger.info(f"Config updated: rounds={rounds}, experiment_name={config['experiment_name']}")
     
     # Save modified config
     save_config(config_path, config)
@@ -62,14 +60,14 @@ def run_experiment(config_path, num_rounds):
         )
         
         if result.returncode == 0:
-            logger.info(f"✓ Experiment with {num_rounds} round(s) completed successfully")
+            logger.info(f"✓ Experiment with {rounds} round (s) completed successfully")
             return True
         else:
-            logger.error(f"✗ Experiment with {num_rounds} round(s) failed with return code {result.returncode}")
+            logger.error(f"✗ Experiment with {rounds} round (s) failed with return code {result.returncode}")
             return False
             
     except Exception as e:
-        logger.error(f"✗ Error running experiment with {num_rounds} round(s): {str(e)}")
+        logger.error(f"✗ Error running experiment with {rounds} round (s): {str(e)}")
         return False
     finally:
         # Restore original config
@@ -79,40 +77,38 @@ def run_experiment(config_path, num_rounds):
 
 def main():
     """Main function to run all experiments."""
-    config_path = './config/config.json'
-
-    print(f"Using config file: {config_path}")
+    config_path = 'config/config.json'
     
     # Validate config file exists
     if not Path(config_path).exists():
         logger.error(f"Config file not found: {config_path}")
         sys.exit(1)
     
-    # Test with rounds from 10 to 22 (adjustable)
-    rounds_to_test = list(range(10, 22))
+    # Test with rounds from 10 to 23
+    rounds_list = list(range(10, 24))
     results = {}
     
-    logger.info(f"Starting experiments with varying number of rounds: {rounds_to_test}")
-                                                                                        
-    for num_rounds in rounds_to_test:
-        success = run_experiment(config_path, num_rounds)
-        results[num_rounds] = 'SUCCESS' if success else 'FAILED'
+    logger.info(f"Starting experiments with varying rounds: {rounds_list}")
+    
+    for rounds in rounds_list:
+        success = run_experiment(config_path, rounds)
+        results[rounds] = 'SUCCESS' if success else 'FAILED'
     
     # Print summary
     logger.info(f"\n{'='*80}")
     logger.info("EXPERIMENT SUMMARY")
     logger.info(f"{'='*80}")
     
-    for num_rounds in rounds_to_test:
-        status = results[num_rounds]
+    for rounds in rounds_list:
+        status = results[rounds]
         symbol = "✓" if status == 'SUCCESS' else "✗"
-        logger.info(f"{symbol} Rounds: {num_rounds:2d} - {status}")
+        logger.info(f"{symbol} rounds: {rounds:2d} - {status}")
     
     # Count successes and failures
     successes = sum(1 for v in results.values() if v == 'SUCCESS')
     failures = sum(1 for v in results.values() if v == 'FAILED')
     
-    logger.info(f"\nTotal: {successes} successful, {failures} failed out of {len(rounds_to_test)} experiments")
+    logger.info(f"\nTotal: {successes} successful, {failures} failed out of {len(rounds_list)} experiments")
     logger.info(f"{'='*80}\n")
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 {
     "experiment_name": "FedProx_KidneyData_ResNet18_CustomLayer4_FC",
-    "dataset_path": "../../data",
-    "metadata_path": "../../data/kidneyData.csv",
+    "dataset_path": "/mnt/d/Mestrado/MO839/data",
+    "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
     "target_columns": [
         "target",
         "Class"
