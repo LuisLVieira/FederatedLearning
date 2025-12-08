@@ -83,8 +83,8 @@ def main():
         logger.error(f"Config file not found: {config_path}")
         sys.exit(1)
     
-    # Test with client counts from 1 to 15
-    client_counts = list(range(1, 16))
+    # Test with client counts from 5 to 12
+    client_counts = list(range(5, 13))
     results = {}
     
     logger.info(f"Starting experiments with varying client counts: {client_counts}")

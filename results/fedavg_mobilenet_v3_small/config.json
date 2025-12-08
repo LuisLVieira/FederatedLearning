@@ -1,5 +1,5 @@
 {
-    "experiment_name": "fedavg_KidneyData",
+    "experiment_name": "fedadagrad_mobilenet_v3_small",
     "dataset_path": "/mnt/d/Mestrado/MO839/data",
     "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
     "target_columns": [
@@ -47,7 +47,7 @@
         }
     },
     "model_config": {
-        "model": "custom_layer4_fc_resnet18",
+        "model": "mobilenet_v3_small",
         "epochs": 3,
         "batch_size": 64,
         "learning_rate": 0.001,

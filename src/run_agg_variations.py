@@ -42,7 +42,7 @@ def run_experiment(config_path, aggregation):
     config['aggregation'] = aggregation
 
     
-    # Update experiment name to include aggregator
+    # Update experiment name to include epoch count
     config['experiment_name'] = f"{aggregation}_KidneyData"
     
     logger.info(f"Config updated: aggregation={aggregation}, experiment_name={config['experiment_name']}")
@@ -83,11 +83,11 @@ def main():
         logger.error(f"Config file not found: {config_path}")
         sys.exit(1)
     
-    # Test with aggregators from 1 to 10
-    aggregators = ['fedadagrad', 'fedadam', 'fedyogi', 'krum', 'dp_fedavg_adaptive']
+    # Test with epoch counts from 1 to 10
+    aggregators = ['fedavg', 'fedprox',  'qfedavg', 'faulttolerant_fedavg', 'fedadagrad', 'fedadam', 'fedyogi', 'krum', 'dp_fedavg_adaptive']
     results = {}
     
-    logger.info(f"Starting experiments with varying aggregators: {aggregators}")
+    logger.info(f"Starting experiments with varying epoch counts: {aggregators}")
     
     for aggregation in aggregators:
         success = run_experiment(config_path, aggregation)
