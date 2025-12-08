@@ -1,5 +1,5 @@
 {
-    "experiment_name": "FedProx_KidneyData_ResNet18_CustomLayer4_FC",
+    "experiment_name": "FedProx_KidneyData_ResNet18_CustomLayer4_FC_rounds_16",
     "dataset_path": "../../data",
     "metadata_path": "../../data/kidneyData.csv",
     "target_columns": [
@@ -11,7 +11,7 @@
     "num_workers": 0,
     "num_clients": 7,
     "random_seed": 42,
-    "rounds": 1,
+    "rounds": 16,
     "test_ratio": 0.15,
     "global_valid_ratio": 0.15,
     "valid_ratio": 0.15,
