@@ -1,5 +1,5 @@
 {
-    "experiment_name": "FedProx_KidneyData_ResNet18_CustomLayer4_FC_epochs_2",
+    "experiment_name": "fedadagrad_KidneyData",
     "dataset_path": "/mnt/d/Mestrado/MO839/data",
     "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
     "target_columns": [
@@ -11,11 +11,11 @@
     "num_workers": 0,
     "num_clients": 7,
     "random_seed": 42,
-    "rounds": 22,
+    "rounds": 1,
     "test_ratio": 0.15,
     "global_valid_ratio": 0.15,
     "valid_ratio": 0.15,
-    "aggregation": "fedprox",
+    "aggregation": "fedavg",
     "fraction_fit": 1.0,
     "fraction_evaluate": 1.0,
     "mu": 0.05,
@@ -48,7 +48,7 @@
     },
     "model_config": {
         "model": "custom_layer4_fc_resnet18",
-        "epochs": 2,
+        "epochs": 1,
         "batch_size": 64,
         "learning_rate": 0.001,
         "criterion": {
