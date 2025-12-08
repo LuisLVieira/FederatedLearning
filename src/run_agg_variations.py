@@ -84,7 +84,9 @@ def main():
         sys.exit(1)
     
     # Test with epoch counts from 1 to 10
-    aggregators = ['fedavg', 'fedprox',  'qfedavg', 'faulttolerant_fedavg', 'fedadagrad', 'fedadam', 'fedyogi', 'krum', 'dp_fedavg_adaptive']
+    # aggregators = ['fedavg', 'fedprox',  'qfedavg', 'faulttolerant_fedavg', 'fedadagrad', 'fedadam', 'fedyogi', 'krum', 'dp_fedavg_adaptive']
+    # aggregators = ['fedavgm','fedadagrad', 'fedadam', 'fedyogi', 'krum', 'dp_fedavg_adaptive']
+    aggregators = ['fedyogi']
     results = {}
     
     logger.info(f"Starting experiments with varying epoch counts: {aggregators}")

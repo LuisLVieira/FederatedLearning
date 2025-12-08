@@ -1,7 +1,7 @@
 {
-    "experiment_name": "fedavg_KidneyData",
-    "dataset_path": "/mnt/d/Mestrado/MO839/data",
-    "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
+    "experiment_name": "dp_fedavg_adaptive_KidneyData",
+    "dataset_path": "/mnt/c/Users/marcella_st_ana/Documents/pos_graduacao/materias/topicos_aprendizado_federado/trabalho_pratico/data",
+    "metadata_path": "/mnt/c/Users/marcella_st_ana/Documents/pos_graduacao/materias/topicos_aprendizado_federado/trabalho_pratico/data/kidneyData.csv",
     "target_columns": [
         "target",
         "Class"
@@ -15,13 +15,13 @@
     "test_ratio": 0.15,
     "global_valid_ratio": 0.15,
     "valid_ratio": 0.15,
-    "aggregation": "fedavg",
+    "aggregation": "fedyogi",
     "fraction_fit": 1.0,
     "fraction_evaluate": 1.0,
     "mu": 0.05,
     "resources": {
         "num_cpus": 1,
-        "num_gpus": 0.25
+        "num_gpus": 0
     },
     "data_transform": {
         "img_size": 224,
@@ -48,7 +48,7 @@
     },
     "model_config": {
         "model": "custom_layer4_fc_resnet18",
-        "epochs": 3,
+        "epochs": 1,
         "batch_size": 64,
         "learning_rate": 0.001,
         "criterion": {
