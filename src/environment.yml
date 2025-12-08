@@ -18,7 +18,12 @@ dependencies:
   - matplotlib
   - seaborn
   - pandas
-  - libsndfile
+  - opencv
+  - pillow
+  - tqdm
+  - jupyterlab
+  - ipywidgets
+  - black   
 
   - pip:
       - torchmetrics
