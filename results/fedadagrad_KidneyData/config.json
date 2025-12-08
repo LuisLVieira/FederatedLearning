@@ -11,7 +11,7 @@
     "num_workers": 0,
     "num_clients": 7,
     "random_seed": 42,
-    "rounds": 22,
+    "rounds": 1,
     "test_ratio": 0.15,
     "global_valid_ratio": 0.15,
     "valid_ratio": 0.15,
@@ -48,7 +48,7 @@
     },
     "model_config": {
         "model": "custom_layer4_fc_resnet18",
-        "epochs": 3,
+        "epochs": 1,
         "batch_size": 64,
         "learning_rate": 0.001,
         "criterion": {
