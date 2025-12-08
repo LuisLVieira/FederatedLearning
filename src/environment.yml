@@ -1,0 +1,25 @@
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+
+dependencies:
+  - python=3.12
+  - pip
+
+  - pytorch
+  - torchvision
+  - torchaudio
+  - pytorch-cuda=12.4
+  - numpy
+  - scipy
+  - scikit-learn
+  - scikit-image
+  - matplotlib
+  - seaborn
+  - pandas
+  - libsndfile
+
+  - pip:
+      - torchmetrics
+      - flwr
