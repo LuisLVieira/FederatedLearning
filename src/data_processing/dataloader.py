@@ -145,6 +145,7 @@ def get_heterogeneous_augmentations(transforms_config):
 
 def load_datasets(
     clients: dict,
+    val_df: pd.DataFrame,
     test_df: pd.DataFrame,
     transforms_config: dict,
     batch_size: int = 32,
@@ -188,7 +189,11 @@ def load_datasets(
     test_dataset = KidneyData(test_df, label_map, transform=val_test_transform)
     testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
 
-    return trainloaders, valloaders, testloader
+    # Test transforms: WITHOUT augmentations
+    val_dataset = KidneyData(val_df, label_map, transform=val_test_transform)
+    globalvalloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+
+    return trainloaders, valloaders, globalvalloader, testloader
 
 
 def plot_load_data(

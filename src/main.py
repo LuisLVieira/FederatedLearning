@@ -51,18 +51,20 @@ def main():
     log.logger.info(f'label mapping: {class_to_target}\n')
 
     # split data on train and test
-    clients_data, test_data = split_on_train_test(
+    clients_data, val_data, test_data = split_on_train_test(
         data=dataset,
         test_ratio=cfg.get("test_ratio", 0.2),
+        val_ratio=cfg.get("global_valid_ratio", 0),
         random_seed=cfg.get("random_seed", 42)
     )
 
     show_train_test_info(
         clients_data,
+        val_data,
         test_data,
         save_path=cfg.get("save_path", ""),
         experiment_name=cfg.get("experiment_name", ""),
-        plot=True
+        plot=False
     )
 
     # get client data from train set
@@ -85,8 +87,9 @@ def main():
     )
 
     # data cache
-    trainloaders, valloaders, testloader = load_datasets(
+    trainloaders, valloaders, globalvalloader, testloader = load_datasets(
         clients=clients,
+        val_df=val_data,
         test_df=test_data,
         transforms_config=cfg["data_transform"],
         batch_size=cfg.get("batch_size", 32),
@@ -137,7 +140,7 @@ def main():
     history = simulation(
         trainloaders,
         valloaders,
-        testloader,
+        globalvalloader,
         device=_device,
         dataset=dataset,
         num_classes=len(class_to_target),
@@ -152,18 +155,31 @@ def main():
 
     # Best model test
 
-    metrics, cm = best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
+    val_metrics, val_cm = best_model_test(history, cfg, _device, class_to_target, globalvalloader, dataset)
 
     plot_confusion_matrices(
-        cm,
-        class_names=[class_to_target[i] for i in range(len(class_to_target))],
+        val_cm,
+        class_names=[target_to_class[i] for i in range(len(class_to_target))],
         save_path=cfg.get("save_path", ""),
         experiment_name=cfg.get("experiment_name", ""),
         figname="confusion_matrix_best_model"
     )
 
-    metrics_df = pd.DataFrame([metrics])
-    metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "metrics.csv"), index=False)
+    metrics_df = pd.DataFrame([val_metrics])
+    metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "global_val_metrics.csv"), index=False)
+
+    test_metrics, test_cm = best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
+
+    plot_confusion_matrices(
+        test_cm,
+        class_names=[target_to_class[i] for i in range(len(class_to_target))],
+        save_path=cfg.get("save_path", ""),
+        experiment_name=cfg.get("experiment_name", ""),
+        figname="confusion_matrix_best_model_test"
+    )
+
+    metrics_df = pd.DataFrame([test_metrics])
+    metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "test_metrics.csv"), index=False)
 
 
 if __name__ == "__main__":

@@ -68,6 +68,7 @@ def plot_random_kidneydata(
 def split_on_train_test(
         data: pd.DataFrame,
         test_ratio: float,
+        val_ratio: float,
         random_seed: int,
         group_column: str = "group",
         target_column: str = "Class"
@@ -83,10 +84,29 @@ def split_on_train_test(
     clients_data = data.iloc[clients_idx].reset_index(drop=True)
     test_data  = data.iloc[test_idx].reset_index(drop=True)
 
-    return clients_data, test_data
+    if val_ratio == 0:
+        return clients_data, test_data, test_data
+
+
+    n_splits_2 = int(1 / val_ratio)
+    splitter_2 = StratifiedGroupKFold(n_splits=n_splits_2, shuffle=True, random_state=random_seed)
+    train_idx, val_idx = next(splitter_2.split(
+        clients_data,
+        clients_data[target_column],
+        groups=clients_data[group_column]
+    ))
+
+    orig_clients = clients_data
+
+    clients_data = orig_clients.iloc[train_idx].reset_index(drop=True)
+    val_data = orig_clients.iloc[val_idx].reset_index(drop=True)
+
+    return clients_data, val_data, test_data
+
 
 def show_train_test_info(
         train_data,
+        val_data,
         test_data,
         save_path,
         experiment_name: str = "",
@@ -96,17 +116,28 @@ def show_train_test_info(
 ):
     log.logger.info(f"Clients subjects: {train_data[group_column].nunique()}")
     log.logger.info(f"Test subjects: {test_data[group_column].nunique()}")
-    log.logger.info(f"Intersection: {set(train_data[group_column]) & set(test_data[group_column])}")
+    log.logger.info(f"Validation subjects: {val_data[group_column].nunique()}")
+    log.logger.info(f"Intersection train/test: {set(train_data[group_column]) & set(test_data[group_column])}")
+    log.logger.info(f"Intersection train/validation: {set(train_data[group_column]) & set(val_data[group_column])}")
+    log.logger.info(f"Intersection validation/test: {set(val_data[group_column]) & set(test_data[group_column])}")
+
+    fig, axes = plt.subplots(2, figsize=(16, 8), sharey=True)
+
+    sns.countplot(x=val_data[target_column], ax=axes[0])
+    axes[0].set_title("Validation set")
+
+    sns.countplot(x=test_data[target_column], ax=axes[1])
+    axes[1].set_title("Test set")
+
+    plt.tight_layout()
+    plt.suptitle("Data available to server only for test global model", fontsize=16)
+    plt.subplots_adjust(top=0.88)
+
     if plot:
-        plt.figure(figsize=(8, 4))
+        plt.show()
 
-        sns.countplot(x=test_data[target_column])
-        plt.title("Data available to server only for test model")
-
-        plt.tight_layout()
-
-        if save_path:
-            plt.savefig(os.path.join(save_path, experiment_name, 'test_data_counts.png'))
+    if save_path:
+        plt.savefig(os.path.join(save_path, experiment_name, 'server_data_counts.png'))
 
 
 def split_on_clients(

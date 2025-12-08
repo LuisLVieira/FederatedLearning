@@ -63,19 +63,32 @@ class KidneyClient(fl.client.NumPyClient):
         )
 
     def evaluate(self, parameters, config):
+        """Evaluate model on validation set and return metrics for aggregation.
+        
+        Returns:
+            tuple: (loss, num_examples, metrics_dict)
+                - loss: float, validation loss value
+                - num_examples: int, number of validation examples
+                - metrics_dict: dict, all validation metrics with float values
+        """
         self.set_parameters(parameters)
         self.model.to(self.device)
 
-        # usar model_config correto
+        # Evaluate on client validation set
         metrics, _ = model_train.evaluate(
             self.model,
             self.dataset,
             self.valloader,
             self.device,
             num_classes=self.num_classes,
-            model_config=self.model_config     # <<<<< TAMBÉM AQUI
+            model_config=self.model_config
         )
-        return float(metrics["loss"]), len(self.valloader.dataset), metrics
+        
+        # Ensure all metrics are floats for proper aggregation
+        metrics_clean = {k: float(v) if not isinstance(v, float) else v 
+                        for k, v in metrics.items()}
+        
+        return float(metrics_clean["loss"]), len(self.valloader.dataset), metrics_clean
 
 
 def client_fn(context: Context):

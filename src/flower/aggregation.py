@@ -5,11 +5,38 @@ from .server import server_evaluate_fn
 
 
 def metrics_agg(metrics):
-    # metrics = [(num_examples, {"loss": ..., "accuracy": ...}), ...]
+    """Aggregate metrics from all clients using weighted average.
+    
+    Args:
+        metrics: list of (num_examples, {metric_dict}) tuples from each client
+        
+    Returns:
+        dict: Aggregated metrics weighted by number of examples per client
+    """
+    if not metrics:
+        return {}
+    
+    # Collect all unique metric keys across all clients
+    all_keys = set()
+    for _, metric_dict in metrics:
+        all_keys.update(metric_dict.keys())
+    
     total_examples = sum(num for num, _ in metrics)
+    if total_examples == 0:
+        return {}
+    
     aggregated = {}
-    for key in metrics[0][1].keys():
-        aggregated[key] = sum(num * m[key] for num, m in metrics) / total_examples
+    for key in all_keys:
+        # Only aggregate metrics present in all clients, or use 0 for missing
+        values = []
+        for num, m in metrics:
+            if key in m:
+                values.append(num * m[key])
+            else:
+                # If a metric is missing, it counts as 0 (or skip it)
+                values.append(0)
+        aggregated[key] = sum(values) / total_examples
+    
     return aggregated
 
 

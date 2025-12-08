@@ -71,6 +71,8 @@ def best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
     log.logger.info("\n Métricas do Melhor Modelo Global:")
     log.logger.info(metrics)
 
+    return metrics, cm
+
 
 def save_history_results(history: Any, cfg: dict, dpi: int = 96):
     """Save FL history results (distributed and centralized) as plots (PNG), CSV and JSON.
