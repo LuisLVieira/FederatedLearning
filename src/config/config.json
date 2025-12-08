@@ -1,5 +1,5 @@
 {
-    "experiment_name": "dp_fedavg_adaptive_KidneyData",
+    "experiment_name": "fedyogi_KidneyData",
     "dataset_path": "/mnt/c/Users/marcella_st_ana/Documents/pos_graduacao/materias/topicos_aprendizado_federado/trabalho_pratico/data",
     "metadata_path": "/mnt/c/Users/marcella_st_ana/Documents/pos_graduacao/materias/topicos_aprendizado_federado/trabalho_pratico/data/kidneyData.csv",
     "target_columns": [
