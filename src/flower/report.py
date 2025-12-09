@@ -71,7 +71,7 @@ def best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
     log.logger.info("\n Métricas do Melhor Modelo Global:")
     log.logger.info(metrics)
 
-    return metrics, cm
+    return  metrics, cm 
 
 
 def save_history_results(history: Any, cfg: dict, dpi: int = 96):
