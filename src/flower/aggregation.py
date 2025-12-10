@@ -6,6 +6,7 @@ from torch import nn
 from typing import List
 import numpy as np
 
+
 def get_parameters(model: nn.Module) -> List[np.ndarray]:
     return [val.detach().cpu().numpy() for _, val in model.state_dict().items()]
 
@@ -56,8 +57,56 @@ def eval_config(server_round: int):
         "round": server_round
     }
 
+
+def _strategy_wrap(base_class):
+    class StrategyWithClientMetrics(base_class):
+        """Strategy wrapper that records per-client metrics."""
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.client_metrics = {}   # per strategy instance
+
+        # Reset on training init
+        def initialize(self, *args, **kwargs):
+            self.client_metrics = {}
+            return super().initialize(*args, **kwargs)
+
+        # ******** KEY HOOK ********
+        def aggregate_evaluate(self, rnd, results, failures):
+            # call original
+            aggr_loss, aggr_metrics = super().aggregate_evaluate(rnd, results, failures)
+
+            # store per-client eval metrics
+            per_client_round = {}
+
+            for client_proxy, evaluate_res in results:
+                cid = getattr(client_proxy, "cid", None)
+                if cid is None:
+                    continue
+
+                # combine loss + metrics (Flower stores loss separately)
+                m = {
+                    "loss": float(getattr(evaluate_res, "loss", None))
+                }
+
+                for k, v in evaluate_res.metrics.items():
+                    if isinstance(v, (float, int)):
+                        m[k] = float(v)
+
+                # store this round
+                per_client_round[cid] = m
+
+                # append to global history
+                self.client_metrics.setdefault(cid, {}).setdefault(rnd, m)
+
+            return aggr_loss, aggr_metrics
+
+    return StrategyWithClientMetrics
+
+
 def get_fedprox(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
-    return FedProx(
+    cls = _strategy_wrap(FedProx)
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -70,7 +119,8 @@ def get_fedprox(save_path, num_classes, testloader, device, model_name, model_co
 
 
 def get_fedavg(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
-    return FedAvg(
+    cls = _strategy_wrap(FedAvg)
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -82,8 +132,9 @@ def get_fedavg(save_path, num_classes, testloader, device, model_name, model_con
 
 
 def get_fedadagrad(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
+    cls = _strategy_wrap(FedAdagrad)
     initial_parameters = ndarrays_to_parameters(get_parameters(model))
-    return FedAdagrad(
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -97,8 +148,9 @@ def get_fedadagrad(save_path, num_classes, testloader, device, model_name, model
     )
 
 def get_fedadam(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
+    cls = _strategy_wrap(FedAdam)
     initial_parameters = ndarrays_to_parameters(get_parameters(model))
-    return FedAdam(
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -115,8 +167,9 @@ def get_fedadam(save_path, num_classes, testloader, device, model_name, model_co
     )
 
 def get_fedyogi(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
+    cls = _strategy_wrap(FedYogi)
     initial_parameters = ndarrays_to_parameters(get_parameters(model))
-    return FedYogi(
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -133,8 +186,9 @@ def get_fedyogi(save_path, num_classes, testloader, device, model_name, model_co
     )
 
 def get_krum(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
+    cls = _strategy_wrap(Krum)
     initial_parameters = ndarrays_to_parameters(get_parameters(model))
-    return Krum(
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -147,8 +201,9 @@ def get_krum(save_path, num_classes, testloader, device, model_name, model_confi
     )
 
 def get_dp_fedavg_adaptive(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
+    cls = _strategy_wrap(DPFedAvgAdaptive)
     initial_parameters = ndarrays_to_parameters(get_parameters(model))
-    return DPFedAvgAdaptive(
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -163,7 +218,8 @@ def get_dp_fedavg_adaptive(save_path, num_classes, testloader, device, model_nam
     )
 
 def get_qfedavg(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
-    return QFedAvg(
+    cls = _strategy_wrap(QFedAvg)
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),
@@ -175,7 +231,8 @@ def get_qfedavg(save_path, num_classes, testloader, device, model_name, model_co
     )
 
 def get_faulttolerant_fedavg(save_path, num_classes, testloader, device, model_name, model_config, model, **cfg):
-    return FaultTolerantFedAvg(
+    cls = _strategy_wrap(FaultTolerantFedAvg)
+    return cls(
         fraction_fit=cfg.get("fraction_fit", 1.0),
         fraction_evaluate=cfg.get("fraction_evaluate", 1.0),
         min_fit_clients=cfg.get("num_clients", 7),

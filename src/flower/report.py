@@ -12,16 +12,25 @@ from typing import Any
 
 def plot_confusion_matrices(cm, class_names, save_path: str = '.', experiment_name: str = '', figname: str = 'confusion_matrix'):
 
+    fig, ax = plt.subplots(figsize=(8,6))
 
-    plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
-    plt.ylabel('True Label')
-    plt.xlabel('Predicted Label')
-    plt.title('Confusion Matrix')
+    sns.heatmap(
+        cm, annot=True, fmt='d', cmap='Blues',
+        xticklabels=class_names,
+        yticklabels=class_names,
+        ax=ax
+    )
+
+    ax.set_ylabel('True Label')
+    ax.set_xlabel('Predicted Label')
+    ax.set_title('Confusion Matrix')
 
     os.makedirs(os.path.join(save_path, experiment_name), exist_ok=True)
-    plt.savefig(os.path.join(save_path, experiment_name, f'{figname}.png'))
-    plt.close()
+
+    fig.savefig(os.path.join(save_path, experiment_name, f'{figname}.png'))
+
+    return fig
+
 
 def best_model_test(history, cfg, _device, class_to_target, testloader, dataset):
     model_config = cfg.get("model_config", {})
@@ -71,160 +80,105 @@ def best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
     log.logger.info("\n Métricas do Melhor Modelo Global:")
     log.logger.info(metrics)
 
-    return  metrics, cm 
+    return global_model, metrics, cm 
 
 
-def save_history_results(history: Any, cfg: dict, dpi: int = 96):
-    """Save FL history results (distributed and centralized) as plots (PNG), CSV and JSON.
-
-    - Plots: loss and accuracy over communication rounds (PNG)
-    - CSV/JSON: distributed metrics per round and centralized test metrics per round
-
-    Files are written to `os.path.join(save_path, experiment_name)`; if `save_path` is
-    not present in `cfg`, defaults to `results/`.
+def save_history_results(history: dict, cfg: dict, dpi: int = 96):
     """
-    save_base = cfg.get("save_path", "results") or "results"
+    Save FL history results:
+    - aggregated metrics
+    - client metrics
+    - plots
+    Returns dicts + matplotlib figure (combined accuracy/loss).
+    """
+    import json, os
+    import matplotlib.pyplot as plt
+
+    save_base = cfg.get("save_path", "results")
     experiment_name = cfg.get("experiment_name", "")
     out_dir = os.path.join(save_base, experiment_name)
     os.makedirs(out_dir, exist_ok=True)
 
-    # Print summary (match user's snippet)
-    try:
-        log.logger.info("Output FL - Loss: %s", getattr(history, "losses_distributed", None))
-        log.logger.info("Output FL - Accuracy: %s", getattr(history, "metrics_distributed", None))
+    central_metrics = history.get("metrics_centralized", {})
+    central_losses = history.get("losses_centralized", [])
+    distributed_metrics = history.get("metrics_distributed", {})
+    distributed_losses = history.get("losses_distributed", [])
+    client_metrics = history.get("clients", {})
 
-        log.logger.info("Centralized metrics: %s", getattr(history, "metrics_centralized", None))
-        log.logger.info("Centralized losses: %s", getattr(history, "losses_centralized", None))
-    except Exception:
-        pass
+    # === Build Distributed ===
+    distributed_data = {}
+    for round, loss in distributed_losses:
+        distributed_data.setdefault(round, {})
+        distributed_data[round]["loss"] = float(loss)
 
-    # Distributed losses
-    fl_loss = []
-    fl_loss_rounds = []
-    for loss in getattr(history, "losses_distributed", []) or []:
-        try:
-            fl_loss_rounds.append(int(loss[0]))
-            fl_loss.append(float(loss[1]))
-        except Exception:
-            continue
-
-    # Distributed metrics (e.g., accuracy)
-    fl_accuracy = []
-    fl_accuracy_rounds = []
-    metrics_distributed = getattr(history, "metrics_distributed", {}) or {}
-    if "accuracy" in metrics_distributed:
-        for acc in metrics_distributed["accuracy"]:
+    for metric_name, metric_list in distributed_metrics.items():
+        for round, value in metric_list:
+            distributed_data.setdefault(round, {})
             try:
-                fl_accuracy_rounds.append(int(acc[0]))
-                fl_accuracy.append(float(acc[1]))
+                distributed_data[round][metric_name] = float(value)
             except Exception:
-                continue
+                distributed_data[round][metric_name] = value
 
-    # Plot Loss
-    communication_round = range(len(fl_loss))
-    plt.figure(figsize=(800 / dpi, 600 / dpi), dpi=dpi)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    plt.plot(communication_round, fl_loss, linewidth=1, linestyle="solid", marker=".", color="black")
-    plt.xlabel("Communication Round(#)", fontsize=18)
-    plt.ylabel("Loss", fontsize=18)
-    plt.grid(linestyle=":", linewidth="0.5")
-    loss_png = os.path.join(out_dir, "fl_loss.png")
-    plt.savefig(loss_png)
-    plt.close()
-
-    # Plot Accuracy
-    communication_round = range(len(fl_accuracy))
-    plt.figure(figsize=(800 / dpi, 600 / dpi), dpi=dpi)
-    plt.xticks(fontsize=18)
-    plt.yticks(fontsize=18)
-    plt.plot(communication_round, fl_accuracy, linewidth=1, linestyle="solid", marker=".", color="black")
-    plt.xlabel("Communication Round(#)", fontsize=18)
-    plt.ylabel("Accuracy", fontsize=18)
-    plt.grid(linestyle=":", linewidth="0.5")
-    acc_png = os.path.join(out_dir, "fl_accuracy.png")
-    plt.savefig(acc_png)
-    plt.close()
-
-    # Build distributed per-round table
-    rounds_data = {}
-    # losses
-    for r, v in getattr(history, "losses_distributed", []) or []:
-        try:
-            rr = int(r)
-        except Exception:
-            continue
-        rounds_data.setdefault(rr, {})
-        rounds_data[rr]["loss"] = float(v)
-
-    # metrics (multiple metrics possible)
-    for metric_name, metric_list in (metrics_distributed or {}).items():
-        for r, v in metric_list:
-            try:
-                rr = int(r)
-            except Exception:
-                continue
-            rounds_data.setdefault(rr, {})
-            try:
-                rounds_data[rr][metric_name] = float(v)
-            except Exception:
-                rounds_data[rr][metric_name] = v
-
-    # Write distributed CSV
-    if rounds_data:
-        fieldnames = ["round"] + sorted({k for d in rounds_data.values() for k in d.keys()})
-        csv_path = os.path.join(out_dir, "distributed_metrics.csv")
-        with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for rr in sorted(rounds_data.keys()):
-                row = {"round": rr}
-                row.update(rounds_data[rr])
-                writer.writerow(row)
-
-        # JSON
-        with open(os.path.join(out_dir, "distributed_metrics.json"), "w", encoding="utf-8") as jf:
-            json.dump({str(k): v for k, v in rounds_data.items()}, jf, indent=2)
-
-    # Save centralized test metrics/losses if present
-    central_metrics = getattr(history, "metrics_centralized", {}) or {}
-    central_losses = getattr(history, "losses_centralized", []) or []
+    # === Build Centralized ===
     central_data = {}
-    # central metrics: dict metric -> list[(round, value), ...]
-    for metric_name, metric_list in central_metrics.items():
-        for r, v in metric_list:
-            try:
-                rr = int(r)
-            except Exception:
-                continue
-            central_data.setdefault(rr, {})
-            try:
-                central_data[rr][metric_name] = float(v)
-            except Exception:
-                central_data[rr][metric_name] = v
+    for round, loss in central_losses:
+        central_data.setdefault(round, {})
+        central_data[round]["loss"] = float(loss)
 
-    # central losses: list[(round, loss), ...]
-    for r, v in central_losses:
-        try:
-            rr = int(r)
-        except Exception:
-            continue
-        central_data.setdefault(rr, {})
-        central_data[rr]["loss"] = float(v)
+    for metric_name, metric_list in central_metrics.items():
+        for round, value in metric_list:
+            central_data.setdefault(round, {})
+            try:
+                central_data[round][metric_name] = float(value)
+            except Exception:
+                central_data[round][metric_name] = value
+
+    # === Save JSON ===
+    if distributed_data:
+        with open(os.path.join(out_dir, "distributed_metrics.json"), "w") as jf:
+            json.dump({str(k): v for k, v in distributed_data.items()}, jf, indent=2)
 
     if central_data:
-        fieldnames = ["round"] + sorted({k for d in central_data.values() for k in d.keys()})
-        csv_path = os.path.join(out_dir, "centralized_test_metrics.csv")
-        with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for rr in sorted(central_data.keys()):
-                row = {"round": rr}
-                row.update(central_data[rr])
-                writer.writerow(row)
-
-        # JSON
-        with open(os.path.join(out_dir, "centralized_test_metrics.json"), "w", encoding="utf-8") as jf:
+        with open(os.path.join(out_dir, "centralized_test_metrics.json"), "w") as jf:
             json.dump({str(k): v for k, v in central_data.items()}, jf, indent=2)
 
-    log.logger.info(f"Saved history plots and metrics to {out_dir}")
+    # === Save Client Metrics ===
+    if client_metrics:
+        clients_dir = os.path.join(out_dir, "clients")
+        os.makedirs(clients_dir, exist_ok=True)
+
+        for cid, round_metrics in client_metrics.items():
+            cfile = os.path.join(clients_dir, f"client_{cid}.json")
+            out = {}
+            if os.path.exists(cfile):
+                out = json.load(open(cfile))
+
+            for round, metrics in round_metrics.items():
+                out[str(round)] = metrics
+
+            with open(cfile, "w") as jf:
+                json.dump(out, jf, indent=2)
+
+    # === Build Plot ===
+    # prepare series
+    fl_loss = [v["loss"] for k, v in distributed_data.items()]
+    fl_acc = [v.get("accuracy") for k, v in distributed_data.items()]
+
+    rounds_loss = list(range(len(fl_loss)))
+    rounds_acc = list(range(len(fl_acc)))
+
+    # joint fig
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5), dpi=dpi)
+
+    axes[0].plot(rounds_loss, fl_loss, marker=".")
+    axes[0].set_title("Loss")
+    axes[0].set_xlabel("Round")
+
+    axes[1].plot(rounds_acc, fl_acc, marker=".")
+    axes[1].set_title("Accuracy")
+    axes[1].set_xlabel("Round")
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(out_dir, "distributed_metrics.png"))
+
+    return distributed_data, central_data, client_metrics, fig

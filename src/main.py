@@ -2,6 +2,7 @@ import json
 import argparse
 import log
 import pandas as pd
+import mlflow
 from data_processing.dataset import (
     split_on_train_test,
     show_train_test_info,
@@ -16,20 +17,15 @@ from torch import manual_seed, device, cuda, load
 import os
 from flower.report import best_model_test, plot_confusion_matrices, save_history_results
 from flower.simulation import simulation
+import glob
 
 
-def main():
-    # load data and configs
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True,
-                        help="Path to config.json")
-    args = parser.parse_args()
+def pipeline(cfg):
+    mlflow.log_params(cfg)
+    experiment_path = os.path.join(cfg["save_path"], cfg.get("experiment_name", ""))
 
-    with open(args.config) as f:
-        cfg = json.load(f)
-    
     if ("save_path" in cfg) and (cfg["save_path"]):
-        os.makedirs(os.path.join(cfg["save_path"], cfg.get("experiment_name", "")), exist_ok=True)
+        os.makedirs(experiment_path, exist_ok=True)
 
     random.seed(cfg.get("random_seed", 42))
     np.random.seed(cfg.get("random_seed", 42))
@@ -150,15 +146,23 @@ def main():
 
     log.logger.info(f"Training history: {history}")
 
+    for file in glob.glob(os.path.join(experiment_path, "**"), recursive=True):
+        if file.endswith((".json", ".csv", ".png", ".txt")):
+            mlflow.log_artifact(file)
+
     # Save training history
 
-    save_history_results(history, cfg, dpi=96)
+    distributed, centralized, clients, fig = save_history_results(history, cfg)
+    mlflow.log_figure(fig, "distributed_metrics.png")
+    mlflow.log_dict(distributed, "distributed_metrics.json")
+    mlflow.log_dict(centralized, "centralized_metrics.json")
+    mlflow.log_dict(clients, "clients_metrics.json")
 
     # Best model test
 
-    val_metrics, val_cm = best_model_test(history, cfg, _device, class_to_target, globalvalloader, dataset)
+    best_model, val_metrics, val_cm = best_model_test(history, cfg, _device, class_to_target, globalvalloader, dataset)
 
-    plot_confusion_matrices(
+    fig = plot_confusion_matrices(
         val_cm,
         class_names=[target_to_class[i] for i in range(len(class_to_target))],
         save_path=cfg.get("save_path", ""),
@@ -168,10 +172,14 @@ def main():
 
     metrics_df = pd.DataFrame([val_metrics])
     metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "global_val_metrics.csv"), index=False)
+    mlflow.log_metrics({f"val_{k}": float(v) for k, v in val_metrics.items()})
+    mlflow.log_figure(fig, "confusion_matrix_validation.png")
 
-    test_metrics, test_cm = best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
+    best_model, test_metrics, test_cm = best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
 
-    plot_confusion_matrices(
+    mlflow.pytorch.log_model(best_model, "best_model")
+
+    fig = plot_confusion_matrices(
         test_cm,
         class_names=[target_to_class[i] for i in range(len(class_to_target))],
         save_path=cfg.get("save_path", ""),
@@ -181,7 +189,24 @@ def main():
 
     metrics_df = pd.DataFrame([test_metrics])
     metrics_df.to_csv(os.path.join(cfg.get("save_path", ""), cfg.get("experiment_name", ""), "test_metrics.csv"), index=False)
+    mlflow.log_metrics({f"test_{k}": float(v) for k, v in test_metrics.items()})
+    mlflow.log_figure(fig, "confusion_matrix_test.png")
 
+def main():
+    # load data and configs
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", type=str, required=True,
+                        help="Path to config.json")
+    args = parser.parse_args()
+
+    with open(args.config) as f:
+        cfg = json.load(f)
+    
+    mlflow.set_experiment("Federated Learning KidneyData")
+
+    with mlflow.start_run(run_name=cfg.get("experiment_name", "federated_run")):
+        pipeline(cfg)
+    
 
 if __name__ == "__main__":
     main()

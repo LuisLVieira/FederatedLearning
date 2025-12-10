@@ -55,7 +55,10 @@
                 },
                 "RandomAffine": {
                     "degrees": 0,
-                    "translate": [0.04, 0.04],
+                    "translate": [
+                        0.04,
+                        0.04
+                    ],
                     "fill": 0
                 },
                 "RandomApply": {

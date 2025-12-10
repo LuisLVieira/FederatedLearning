@@ -4,40 +4,26 @@ Repository containing the code developed for the **Federated Learning** course a
 
 ---
 
-## ✅ Overview
+## Overview
 
-This project gathers implementations and experiments related to Federated Learning, designed to study and practice the concepts presented in the course. Users can configure various parameters (e.g., dataset, number of clients, communication rounds, etc.) through a configuration file.
+This project gathers implementations and experiments related to Federated Learning, designed to study and practice the concepts presented in the course. Users can configure various parameters (e.g., dataset, number of clients, communication rounds, etc.) through a configuration file, and techniques to lead with Non-iid data. In this project,
+this framework was used for Federated Kidney data disease classification.
 
 ---
 
-## 💡 Key Features
+## Key Features
 
-* Training machine learning models using a **federated** approach (e.g., FedAvg algorithm).
+* Training machine learning models using a **federated** approach (e.g., FedAvg, FedProx algorithm).
 * Flexible configuration through a **JSON** file — making it easy to adapt for different datasets, number of clients, communication rounds, and aggregation strategies.
 * Clear organization of code and results, enabling easy replication and comparison of experiments.
 * Easily extendable: you can add new datasets, models, or aggregation protocols by modifying only specific parts of the code (or configuration), without restructuring the entire project.
+* Algoritm to create data using Data Augmentation for help on Non-iid scenario.
+* Client Selector could be applied.
+
 
 ---
 
-## 🛠️ Technologies Used
-
-The project is built in Python, leveraging widely used libraries in Machine Learning and Federated Learning:
-
-* **Python** — Main programming language.
-* **Flower** — Federated Learning framework, highly modular and simple to use.
-* **PyTorch** — Used for defining and training Deep Learning models.
-* **NumPy** and **Pandas** — Essential for data manipulation, processing, and analysis.
-* **Matplotlib** — Visualization of results, metric charts, and round evolution.
-* **Scikit-Learn** — Computation of metrics, train/test splitting, and evaluation utilities.
-* **OpenCV** — Loading and processing the dataset images.
-* **argparse** — Command-line argument handling (e.g., `--config`).
-* **Jupyter Notebooks** — For prototyping, visualization, and demonstrations.
-* **JSON** — Configuration file format for experiments.
-* **Git / GitHub** — Version control.
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 The modular structure makes it easy to run and reproduce experiments:
 
@@ -55,7 +41,7 @@ The modular structure makes it easy to run and reproduce experiments:
 
 ---
 
-## 🎯 How to Use / Run Experiments
+## How to Use / Run Experiments
 
 1. **Clone this repository:**
     ```bash
@@ -63,23 +49,39 @@ The modular structure makes it easy to run and reproduce experiments:
     cd FederatedLearning
     ```
 
-2. **Configure the experiment:**
-    Navigate to the `src/config/` folder and edit the **`config.json`** file. Set the desired parameters (number of clients, dataset, number of rounds, etc.).
+2. **Install environment**
 
-3. **Run federated training:**
+    Instal Anaconda or Miniconda
+
+    run
+
+     ```bash
+    cd src
+    conda env create -f environment.yml
+    ```
+
+3. **Configure the experiment:**
+    Navigate to the `src/config/` folder and edit the **`config.json`** file. Set the desired parameters (number of clients, dataset, number of rounds, etc.). On Data Transform key, is possible to set data augmentations techniques and configure the Heterogeneous Data Handler Algoritm.
+
+4. **Run federated training:**
     Start the execution by specifying the configuration file path:
     ```bash
     python main.py --config config/config.json
     ```
 
-4. **Analysis:**
-    The results, logs, and performance metrics will be automatically saved in the `results/` directory for later analysis.
+5. **Analysis:**
+    The results, logs, and performance metrics will be automatically saved in the `results/` directory for later analysis and experiments are logged on MLFlow.
 
-> ⚠️ Depending on the chosen dataset or model, you may need to install additional libraries or adjust configurations (e.g., data paths, train/test split, preprocessing steps, etc.).
+6. **MLFlow**
+    To access mlflow, just open a terminal an type:
+
+    ```bash
+    mlflow ui
+    ```
 
 ---
 
-## 🧪 Usage Examples
+## Usage Examples
 
 You can use this repository to:
 
@@ -90,8 +92,6 @@ You can use this repository to:
 
 ---
 
-## ✨ Final Remarks
+## Final Remarks
 
 This repository serves as a **foundation** for hands-on exploration of Federated Learning — suitable for study, experimentation, and prototyping within the MO839 course context. Its simple and modular structure makes it easy to adapt for other scenarios or future projects.
-
-If you plan to add new modules, datasets, or experiments, consider preserving the existing organization (`src/`, `results/`, clear configurations) to ensure reproducibility and clarity.

@@ -1,5 +1,5 @@
 {
-    "experiment_name": "FedProx_ResNet18_CustomLayer4_Heterogeneous_DataHandler",
+    "experiment_name": "fedprox_KidneyData_fraction_fit",
     "dataset_path": "/mnt/d/Mestrado/MO839/data",
     "metadata_path": "/mnt/d/Mestrado/MO839/data/kidneyData.csv",
     "target_columns": [
@@ -11,13 +11,13 @@
     "num_workers": 0,
     "num_clients": 7,
     "random_seed": 42,
-    "rounds": 22,
+    "rounds": 1,
     "test_ratio": 0.15,
     "global_valid_ratio": 0.15,
     "valid_ratio": 0.15,
     "aggregation": "fedprox",
-    "fraction_fit": 0.6,
-    "fraction_evaluate": 0.6,
+    "fraction_fit": 0.8,
+    "fraction_evaluate": 0.8,
     "min_clients_fit": 3,
     "min_clients_evaluate": 3,
     "mu": 0.05,
@@ -46,28 +46,6 @@
                 0.224,
                 0.225
             ]
-        },
-        "heterogeneous_data_handler": {
-            "augmentations": {
-                "RandomRotation": {
-                    "degrees": 7,
-                    "fill": 0
-                },
-                "RandomAffine": {
-                    "degrees": 0,
-                    "translate": [0.04, 0.04],
-                    "fill": 0
-                },
-                "RandomApply": {
-                    "GaussianBlur": {
-                        "kernel_size": 3
-                    },
-                    "p": 0.15
-                },
-                "RandomHorizontalFlip": {
-                    "p": 0.1
-                }
-            }
         }
     },
     "model_config": {

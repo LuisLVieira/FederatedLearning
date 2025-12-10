@@ -48,10 +48,21 @@ def simulation(trainloaders, valloaders, testloader, device, dataset, num_classe
         context._user_state = _client_state
         return original_client_fn(context)
 
-    return fl.simulation.start_simulation(
+    result = fl.simulation.start_simulation(
         client_fn=client_fn_wrapper,
         num_clients=cfg.get("num_clients", 7),
         config=fl.server.ServerConfig(num_rounds=cfg.get("rounds", 22)),
         strategy=strategy,
         client_resources=cfg.get("resources", {"num_cpus": 1, "num_gpus": 0.25})
     )
+
+    history = {
+        "metrics_centralized": result.metrics_centralized,
+        "metrics_distributed": result.metrics_distributed,
+        "losses_centralized": result.losses_centralized,
+        "losses_distributed": result.losses_distributed,
+    }
+
+    history["clients"] = getattr(strategy, "client_metrics", {})
+
+    return history
