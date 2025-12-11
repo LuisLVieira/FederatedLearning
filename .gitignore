@@ -1,3 +1,6 @@
 __pycache__/
 venv/
 results/**/models/
+mlruns/
+src/mlruns/
+**/mlruns/
