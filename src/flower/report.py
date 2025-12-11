@@ -9,6 +9,7 @@ import seaborn as sns
 import json
 import csv
 from typing import Any
+import mlflow
 
 def plot_confusion_matrices(cm, class_names, save_path: str = '.', experiment_name: str = '', figname: str = 'confusion_matrix'):
 
@@ -54,10 +55,17 @@ def best_model_test(history, cfg, _device, class_to_target, testloader, dataset)
     except:
         # fallback: usa último round
         best_round = round_numbers[-1]
+    
+    mlflow.log_metric("best_round", int(best_round))
 
     best_model_path = os.path.join(save_path, f"model_round{best_round}.pt")
     log.logger.info(f"\n Carregando melhor modelo encontrado: Round {best_round}")
     log.logger.info(f"Path: {best_model_path}")
+
+    mlflow.log_artifact(
+        folder_path=best_model_path,
+        artifact_path="best_model"
+    )
 
     # ---------------------------------------------------------
     # CARREGAR O MODELO GLOBAL
